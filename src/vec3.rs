@@ -143,6 +143,7 @@ impl Neg for Vec3 {
     }
 }
 
+/// Display for debugging
 impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
