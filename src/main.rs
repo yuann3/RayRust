@@ -1,32 +1,35 @@
 use std::io::{self, Write};
+use raytracer::vec3::{Color, Vec3};
+use raytracer::color::write_color;
 
-fn main() {
+fn main() -> io::Result<()> {
     // Image
     let image_width = 256;
     let image_height = 256;
 
-    // PPM header
+    // Render
     println!("P3");
     println!("{} {}", image_width, image_height);
     println!("255");
 
+    let mut stdout = io::stdout();
+    let stderr = io::stderr();
+
     for j in 0..image_height {
         // Progress indicator
-        eprint!("\r Scanliens: {}", image_height - j);
-        io::stderr().flush().unwrap(); // make sure immediate output
+        write!(stderr.lock(), "\rScanlines remaining: {} ", image_height - j)?;
+        stderr.lock().flush()?;
 
         for i in 0..image_width {
-            let r = i as f64 / (image_width - 1) as f64;
-            let g = j as f64 / (image_height - 1) as f64;
-            let b = 0.0;
-
-            // Convert to integer values;
-            let ir = (255.99 * r) as i32;
-            let ig = (255.99 * g) as i32;
-            let ib = (255.99 * b) as i32;
-
-            println!("{} {} {}", ir, ig, ib);
+            let pixel_color = Color::new(
+                i as f64 / (image_width - 1) as f64,
+                j as f64 / (image_height - 1) as f64,
+                0.0
+            );
+            write_color(&mut stdout, pixel_color)?;
         }
     }
+
     eprintln!("\rDone.                 ");
+    Ok(())
 }
