@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{fmt::write, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign}};
+use std::{ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign}};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
@@ -146,5 +146,63 @@ impl Neg for Vec3 {
 impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+        assert_eq!(v.x(), 1.0);
+        assert_eq!(v.y(), 2.0);
+        assert_eq!(v.z(), 3.0);
+    }
+
+    #[test]
+    fn test_add() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        let v3 = v1 + v2;
+        assert_eq!(v3.x(), 5.0);
+        assert_eq!(v3.y(), 7.0);
+        assert_eq!(v3.z(), 9.0);
+    }
+
+    #[test]
+    fn test_mul_scalar() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = v1 * 2.0;
+        assert_eq!(v2.x(), 2.0);
+        assert_eq!(v2.y(), 4.0);
+        assert_eq!(v2.z(), 6.0);
+    }
+
+    #[test]
+    fn test_dot_product() {
+        let v1 = Vec3::new(1.0, 2.0, 3.0);
+        let v2 = Vec3::new(4.0, 5.0, 6.0);
+        assert_eq!(v1.dot(&v2), 32.0);
+    }
+
+    #[test]
+    fn test_cross_product() {
+        let v1 = Vec3::new(1.0, 0.0, 0.0);
+        let v2 = Vec3::new(0.0, 1.0, 0.0);
+        let v3 = v1.cross(&v2);
+        assert_eq!(v3.x(), 0.0);
+        assert_eq!(v3.y(), 0.0);
+        assert_eq!(v3.z(), 1.0);
+    }
+
+    #[test]
+    fn test_unit_vector() {
+        let v = Vec3::new(3.0, 0.0, 0.0);
+        let u = v.unit_vector();
+        assert_eq!(u.x(), 1.0);
+        assert_eq!(u.y(), 0.0);
+        assert_eq!(u.z(), 0.0);
     }
 }
