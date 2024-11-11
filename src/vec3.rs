@@ -1,4 +1,5 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::fmt;
+use std::{fmt::write, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign}};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Vec3 {
@@ -97,5 +98,53 @@ impl SubAssign for Vec3 {
         self.e[0] -= other.e[0];
         self.e[1] -= other.e[1];
         self.e[2] -= other.e[2];
+    }
+}
+
+impl Mul<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, t: f64) -> Vec3 {
+        Vec3 { 
+            e: [self.e[0] * t, self.e[1] * t, self.e[2] * t], 
+        }
+    }
+}
+
+impl MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, t: f64) {
+        self.e[0] *= t;
+        self.e[1] *= t;
+        self.e[2] *= t;
+    }
+}
+
+impl Div<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, t: f64) -> Vec3 {
+        self * (1.0 / t)
+    }
+}
+
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, t: f64) {
+        *self *= 1.0 / t;
+    }
+}
+
+impl Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Vec3 {
+        Vec3 {
+            e: [-self.e[0], -self.e[1], -self.e[2]],
+        }
+    }
+}
+
+impl fmt::Display for Vec3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {} {}", self.e[0], self.e[1], self.e[2])
     }
 }
