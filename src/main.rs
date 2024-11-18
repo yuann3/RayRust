@@ -1,5 +1,5 @@
 use std::io::{self, Write};
-use raytracer::vec3::{Color, Vec3};
+use raytracer::vec3::Color;
 use raytracer::color::write_color;
 
 fn main() -> io::Result<()> {

@@ -33,8 +33,8 @@ impl Vec3 {
 
     // Utility methods
     pub fn dot(&self, other: &Vec3) -> f64 {
-        self.e[0] * other.e[0] + 
-        self.e[1] * other.e[1] + 
+        self.e[0] * other.e[0] +
+        self.e[1] * other.e[1] +
         self.e[2] * other.e[2]
     }
 
