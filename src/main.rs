@@ -1,17 +1,16 @@
+use raytracer::color::write_color;
+use raytracer::hittable::{HitRecord, Hittable};
+use raytracer::hittable_list::HittableList;
 use raytracer::ray::Ray;
-use raytracer::sphere::hit_sphere;
+use raytracer::sphere::Sphere;
 use raytracer::vec3::{Color, Point3, Vec3};
 use std::io::{self, Write};
 
-fn ray_color(ray: &Ray) -> Color {
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray);
-
-    if t > 0.0 {
-        let intersection = ray.at(t);
-        let normal = (intersection - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
-        return Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0) * 0.5;
+fn ray_color(ray: &Ray, world: &dyn Hittable) -> Color {
+    let mut rec = HitRecord::new(Point3::zero(), Vec3::zero(), 0.0);
+    if world.hit(ray, 0.0, f64::INFINITY, &mut rec) {
+        return (rec.normal + Color::new(1.0, 1.0, 1.0)) * 0.5;
     }
-
     let unit_direction = ray.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
     Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
@@ -23,6 +22,11 @@ fn main() -> io::Result<()> {
     let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
     let image_height = if image_height < 1 { 1 } else { image_height };
+
+    // World
+    let mut world = HittableList::new();
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
 
     // Camera
     let focal_length = 1.0;
@@ -67,7 +71,7 @@ fn main() -> io::Result<()> {
             let ray = Ray::new(camera_center, ray_direction);
 
             // Get the color for this ray
-            let pixel_color = ray_color(&ray);
+            let pixel_color = ray_color(&ray, &world);
             write_color(&mut stdout, pixel_color)?;
         }
     }
