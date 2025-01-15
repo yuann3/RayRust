@@ -1,20 +1,20 @@
-use std::io::{self, Write};
 use raytracer::ray::Ray;
-use raytracer::vec3::{Vec3, Color, Point3};
-use raytracer::color::write_color;
 use raytracer::sphere::hit_sphere;
+use raytracer::vec3::{Color, Point3, Vec3};
+use std::io::{self, Write};
 
 fn ray_color(ray: &Ray) -> Color {
-    // Check if ray hits sphere centered at (0,0,-1) with radius 0.5
-    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray) {
-        return Color::new(1.0, 0.0, 0.0); // Red color for sphere
+    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, ray);
+
+    if t > 0.0 {
+        let intersection = ray.at(t);
+        let normal = (intersection - Vec3::new(0.0, 0.0, -1.0)).unit_vector();
+        return Color::new(normal.x() + 1.0, normal.y() + 1.0, normal.z() + 1.0) * 0.5;
     }
 
-    // Background color (blue-white gradient) if no hit
     let unit_direction = ray.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
-    Color::new(1.0, 1.0, 1.0) * (1.0 - a) + // white contribution
-    Color::new(0.5, 0.7, 1.0) * a           // blue contribution
+    Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
 }
 
 fn main() -> io::Result<()> {
@@ -27,8 +27,7 @@ fn main() -> io::Result<()> {
     // Camera
     let focal_length = 1.0;
     let viewport_height = 2.0;
-    let viewport_width = viewport_height 
-                       * (image_width as f64 / image_height as f64);
+    let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
     let camera_center = Point3::new(0.0, 0.0, 0.0);
 
     // Calculate vectors across viewport edges
@@ -40,12 +39,9 @@ fn main() -> io::Result<()> {
     let pixel_delta_v = viewport_v / image_height as f64;
 
     // Calculate upper left pixel location
-    let viewport_upper_left = camera_center 
-                            - Vec3::new(0.0, 0.0, focal_length) 
-                            - viewport_u/2.0
-                            - viewport_v/2.0;
-    let pixel00_loc = viewport_upper_left
-                    + (pixel_delta_u + pixel_delta_v) * 0.5;
+    let viewport_upper_left =
+        camera_center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+    let pixel00_loc = viewport_upper_left + (pixel_delta_u + pixel_delta_v) * 0.5;
 
     // Render
     println!("P3");
@@ -57,12 +53,16 @@ fn main() -> io::Result<()> {
 
     for j in 0..image_height {
         // Progress indicator
-        write!(stderr.lock(), "\rScanlines remaining: {} ", image_height - j)?;
+        write!(
+            stderr.lock(),
+            "\rScanlines remaining: {} ",
+            image_height - j
+        )?;
         stderr.lock().flush()?;
 
         for i in 0..image_width {
-          let pixel_center = pixel00_loc + (pixel_delta_u * i as f64)
-                           + (pixel_delta_v * j as f64);
+            let pixel_center =
+                pixel00_loc + (pixel_delta_u * i as f64) + (pixel_delta_v * j as f64);
             let ray_direction = pixel_center - camera_center;
             let ray = Ray::new(camera_center, ray_direction);
 
