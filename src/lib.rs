@@ -1,3 +1,4 @@
+pub mod bababoi;
 pub mod camera;
 pub mod color;
 pub mod hittable;
