@@ -15,6 +15,41 @@ impl Vec3 {
         Vec3 { e: [0.0, 0.0, 0.0] }
     }
 
+    pub fn random() -> Vec3 {
+        Vec3::new(
+            crate::bababoi::random_double(),
+            crate::bababoi::random_double(),
+            crate::bababoi::random_double(),
+        )
+    }
+
+    pub fn random_range(min: f64, max: f64) -> Vec3 {
+        Vec3::new(
+            crate::bababoi::random_double_range(min, max),
+            crate::bababoi::random_double_range(min, max),
+            crate::bababoi::random_double_range(min, max),
+        )
+    }
+
+    pub fn random_unit_vector() -> Vec3 {
+        loop {
+            let p = Vec3::random_range(-1.0, 1.0);
+            let len_squared = p.length_squared();
+            if len_squared > 1e-160 && len_squared <= 1.0 {
+                return p / len_squared.sqrt();
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: &Vec3) -> Vec3 {
+        let on_unit_sphere = Self::random_unit_vector();
+        if on_unit_sphere.dot(normal) > 0.0 {
+            on_unit_sphere
+        } else {
+            -on_unit_sphere
+        }
+    }
+
     // Getters
     pub fn x(&self) -> f64 {
         self.e[0]
@@ -207,5 +242,13 @@ mod tests {
         assert_eq!(u.x(), 1.0);
         assert_eq!(u.y(), 0.0);
         assert_eq!(u.z(), 0.0);
+    }
+
+    #[test]
+    fn test_random_range() {
+        let v = Vec3::random_range(-1.0, 1.0);
+        assert!(v.x() >= -1.0 && v.x() <= 1.0);
+        assert!(v.y() >= -1.0 && v.y() <= 1.0);
+        assert!(v.z() >= -1.0 && v.z() <= 1.0);
     }
 }

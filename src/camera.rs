@@ -90,13 +90,12 @@ impl Camera {
 
     fn ray_color(&self, ray: &Ray, world: &dyn Hittable) -> Color {
         let mut rec = crate::hittable::HitRecord::new(Point3::zero(), Vec3::zero(), 0.0);
+
         if world.hit(ray, 0.0, f64::INFINITY, &mut rec) {
-            return Color::new(
-                0.5 * (rec.normal.x() + 1.0),
-                0.5 * (rec.normal.y() + 1.0),
-                0.5 * (rec.normal.z() + 1.0),
-            );
+            let direction = Vec3::random_on_hemisphere(&rec.normal);
+            return self.ray_color(&Ray::new(rec.p, direction), world) * 0.5;
         }
+
         let unit_direction = ray.direction().unit_vector();
         let a = 0.5 * (unit_direction.y() + 1.0);
         Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a

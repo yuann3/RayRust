@@ -1,5 +1,3 @@
-use std::fmt;
-
 #[derive(Copy, Debug, Clone)]
 pub struct Interval {
     pub min: f64,
