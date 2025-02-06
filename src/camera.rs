@@ -1,6 +1,7 @@
 use crate::bababoi::random_double;
 use crate::color::write_color;
-use crate::hittable::Hittable;
+use crate::hittable::{HitRecord, Hittable};
+use crate::material::Lambertian;
 use crate::ray::Ray;
 use crate::vec3::{Color, Point3, Vec3};
 use std::io::{self, Write};
@@ -59,11 +60,18 @@ impl Camera {
             return Color::zero();
         }
 
-        let mut rec = crate::hittable::HitRecord::new(Point3::zero(), Vec3::zero(), 0.0);
+        let mut rec = HitRecord::new(
+            Point3::zero(),
+            Vec3::zero(),
+            Lambertian::new(Color::zero()),
+            0.0,
+        );
 
         if world.hit(ray, 0.001, f64::INFINITY, &mut rec) {
-            let direction = Vec3::random_on_hemisphere(&rec.normal);
-            return self.ray_color(&Ray::new(rec.p, direction), depth - 1, world) * 0.5;
+            if let Some((attenuation, scattered)) = rec.mat.scatter(ray, &rec) {
+                return attenuation * self.ray_color(&scattered, depth - 1, world);
+            }
+            return Color::zero();
         }
 
         let unit_direction = ray.direction().unit_vector();
@@ -76,17 +84,8 @@ impl Camera {
         println!("{} {}", self.image_width, self.image_height);
         println!("255");
 
-        let mut stdout = io::stdout();
-        let stderr = io::stderr();
-
         for j in 0..self.image_height {
-            write!(
-                stderr.lock(),
-                "\rScanlines remaining: {} ",
-                self.image_height - j
-            )?;
-            stderr.lock().flush()?;
-
+            eprint!("\rScanlines remaining: {} ", self.image_height - j);
             for i in 0..self.image_width {
                 let mut pixel_color = Color::zero();
 
@@ -100,11 +99,11 @@ impl Camera {
                     pixel_color += self.ray_color(&ray, self.max_depth, world);
                 }
 
-                write_color(&mut stdout, pixel_color, self.samples_per_pixel)?;
+                write_color(&mut io::stdout(), pixel_color, self.samples_per_pixel)?;
             }
         }
 
-        eprintln!("\rDone.                 ");
+        eprintln!("\nDone.");
         Ok(())
     }
 }

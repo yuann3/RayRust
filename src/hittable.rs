@@ -1,19 +1,23 @@
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::{Point3, Vec3};
+use std::sync::Arc;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
+    pub mat: Arc<dyn Material>,
     pub t: f64,
     pub front_face: bool,
 }
 
 impl HitRecord {
-    pub fn new(p: Point3, normal: Vec3, t: f64) -> Self {
+    pub fn new(p: Point3, normal: Vec3, mat: Arc<dyn Material>, t: f64) -> Self {
         Self {
             p,
             normal,
+            mat,
             t,
             front_face: false,
         }

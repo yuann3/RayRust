@@ -15,6 +15,11 @@ impl Vec3 {
         Vec3 { e: [0.0, 0.0, 0.0] }
     }
 
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        (self.e[0].abs() < s) && (self.e[1].abs() < s) && (self.e[2].abs() < s)
+    }
+
     pub fn random() -> Vec3 {
         Vec3::new(
             crate::bababoi::random_double(),
@@ -47,6 +52,15 @@ impl Vec3 {
             on_unit_sphere
         } else {
             -on_unit_sphere
+        }
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random_range(-1.0, 1.0);
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 
@@ -87,6 +101,10 @@ impl Vec3 {
 
     pub fn unit_vector(&self) -> Vec3 {
         *self / self.length()
+    }
+
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        *self - *normal * (2.0 * self.dot(normal))
     }
 }
 
@@ -144,6 +162,20 @@ impl Mul<f64> for Vec3 {
     fn mul(self, t: f64) -> Vec3 {
         Vec3 {
             e: [self.e[0] * t, self.e[1] * t, self.e[2] * t],
+        }
+    }
+}
+
+impl Mul for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            e: [
+                self.e[0] * other.e[0],
+                self.e[1] * other.e[1],
+                self.e[2] * other.e[2],
+            ],
         }
     }
 }
