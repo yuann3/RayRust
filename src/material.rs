@@ -11,6 +11,16 @@ pub struct Lambertian {
     albedo: Color,
 }
 
+pub struct Dielectric {
+    refraction_index: f64,
+}
+
+impl Dielectric {
+    pub fn new(refraction_index: f64) -> Arc<Self> {
+        Arc::new(Self { refraction_index })
+    }
+}
+
 pub struct Metal {
     albedo: Color,
     fuzz: f64,
@@ -22,6 +32,22 @@ impl Metal {
             albedo,
             fuzz: fuzz.min(1.0),
         })
+    }
+}
+
+impl Material for Dielectric {
+    fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+        let refraction_ratio = if rec.front_face {
+            1.0 / self.refraction_index
+        } else {
+            self.refraction_index
+        };
+
+        let unit_direction = r_in.direction().unit_vector();
+        let refracted = unit_direction.refract(&rec.normal, refraction_ratio);
+
+        let scattered = Ray::new(rec.p, refracted);
+        Some((Color::new(1.0, 1.0, 1.0), scattered))
     }
 }
 

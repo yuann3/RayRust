@@ -1,6 +1,6 @@
 use raytracer::camera::Camera;
 use raytracer::hittable_list::HittableList;
-use raytracer::material::{Lambertian, Metal};
+use raytracer::material::{Dielectric, Lambertian, Metal};
 use raytracer::sphere::Sphere;
 use raytracer::vec3::{Color, Point3};
 use std::io;
@@ -25,8 +25,8 @@ fn main() -> io::Result<()> {
         center_material,
     )));
 
-    // Left sphere - polished metal (low fuzz)
-    let left_material = Metal::new(Color::new(0.8, 0.8, 0.8), 0.3);
+    // Left sphere - glass
+    let left_material = Dielectric::new(1.5);
     world.add(Box::new(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
         0.5,
