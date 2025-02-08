@@ -1,10 +1,10 @@
-use crate::bababoi::random_double;
+use crate::bababoi::{degrees_to_radians, random_double, random_double_range};
 use crate::color::write_color;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Lambertian;
 use crate::ray::Ray;
 use crate::vec3::{Color, Point3, Vec3};
-use std::io::{self, Write};
+use std::io;
 
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -15,6 +15,8 @@ pub struct Camera {
     pub lookfrom: Point3,
     pub lookat: Point3,
     pub vup: Vec3,
+    pub defocus_angle: f64,
+    pub focus_dist: f64,
 
     image_height: i32,
     center: Point3,
@@ -24,6 +26,8 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+    defocus_disk_u: Vec3,
+    defocus_disk_v: Vec3,
 }
 
 impl Camera {
@@ -37,6 +41,8 @@ impl Camera {
             lookfrom: Point3::new(0.0, 0.0, 0.0),
             lookat: Point3::new(0.0, 0.0, -1.0),
             vup: Vec3::new(0.0, 1.0, 0.0),
+            defocus_angle: 0.0,
+            focus_dist: 10.0,
             image_height: 0,
             center: Point3::zero(),
             pixel00_loc: Point3::zero(),
@@ -45,6 +51,8 @@ impl Camera {
             u: Vec3::zero(),
             v: Vec3::zero(),
             w: Vec3::zero(),
+            defocus_disk_u: Vec3::zero(),
+            defocus_disk_v: Vec3::zero(),
         }
     }
 
@@ -58,10 +66,9 @@ impl Camera {
 
         self.center = self.lookfrom;
 
-        let focal_length = (self.lookfrom - self.lookat).length();
         let theta = self.vfov.to_radians();
         let h = (theta / 2.0).tan();
-        let viewport_height = 2.0 * h * focal_length;
+        let viewport_height = 2.0 * h * self.focus_dist;
         let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
 
         self.w = (self.lookfrom - self.lookat).unit_vector();
@@ -75,8 +82,50 @@ impl Camera {
         self.pixel_delta_v = viewport_v / self.image_height as f64;
 
         let viewport_upper_left =
-            self.center - (self.w * focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+            self.center - (self.w * self.focus_dist) - viewport_u / 2.0 - viewport_v / 2.0;
         self.pixel00_loc = viewport_upper_left + (self.pixel_delta_u + self.pixel_delta_v) * 0.5;
+
+        // Calculate the camera defocus disk basis vectors
+        let defocus_radius = self.focus_dist * (degrees_to_radians(self.defocus_angle / 2.0)).tan();
+        self.defocus_disk_u = self.u * defocus_radius;
+        self.defocus_disk_v = self.v * defocus_radius;
+    }
+
+    fn random_in_unit_disk() -> Vec3 {
+        loop {
+            let p = Vec3::new(
+                random_double_range(-1.0, 1.0),
+                random_double_range(-1.0, 1.0),
+                0.0,
+            );
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
+
+    fn defocus_disk_sample(&self) -> Point3 {
+        let p = Self::random_in_unit_disk();
+        self.center + (self.defocus_disk_u * p.x()) + (self.defocus_disk_v * p.y())
+    }
+
+    fn get_ray(&self, i: i32, j: i32) -> Ray {
+        let pixel_center =
+            self.pixel00_loc + (self.pixel_delta_u * i as f64) + (self.pixel_delta_v * j as f64);
+
+        let pixel_sample = pixel_center
+            + self.pixel_delta_u * (random_double() - 0.5)
+            + self.pixel_delta_v * (random_double() - 0.5);
+
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
+
+        let ray_direction = pixel_sample - ray_origin;
+
+        Ray::new(ray_origin, ray_direction)
     }
 
     fn ray_color(&self, ray: &Ray, depth: i32, world: &dyn Hittable) -> Color {
@@ -116,12 +165,7 @@ impl Camera {
                 let mut pixel_color = Color::zero();
 
                 for _ in 0..self.samples_per_pixel {
-                    let pixel_sample = self.pixel00_loc
-                        + (self.pixel_delta_u * (i as f64 + random_double()))
-                        + (self.pixel_delta_v * (j as f64 + random_double()));
-
-                    let ray_direction = pixel_sample - self.center;
-                    let ray = Ray::new(self.center, ray_direction);
+                    let ray = self.get_ray(i, j);
                     pixel_color += self.ray_color(&ray, self.max_depth, world);
                 }
 

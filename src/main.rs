@@ -45,15 +45,18 @@ fn main() -> io::Result<()> {
 
     let mut cam = Camera::new();
 
-    cam.vfov = 60.0;
-    cam.lookfrom = Point3::new(-2.0, 2.0, 1.0);
-    cam.lookat = Point3::new(0.0, 0.0, -1.0);
-    cam.vup = Vec3::new(0.0, 1.0, 0.0);
-
     cam.aspect_ratio = 16.0 / 9.0;
     cam.image_width = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth = 50;
+
+    cam.vfov = 20.0;
+    cam.lookfrom = Point3::new(-2.0, 2.0, 1.0);
+    cam.lookat = Point3::new(0.0, 0.0, -1.0);
+    cam.vup = Vec3::new(0.0, 1.0, 0.0);
+
+    cam.defocus_angle = 10.0;
+    cam.focus_dist = 3.4;
 
     cam.render(&world)?;
 
