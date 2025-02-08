@@ -20,17 +20,27 @@ fn main() -> io::Result<()> {
     // Center sphere - diffuse blue
     let center_material = Lambertian::new(Color::new(0.1, 0.2, 0.5));
     world.add(Box::new(Sphere::new(
-        Point3::new(0.0, 0.0, -1.0),
+        Point3::new(0.0, 0.0, -1.2),
         0.5,
         center_material,
     )));
 
-    // Left sphere - glass
-    let left_material = Dielectric::new(1.5);
+    // Left sphere - hollow glass
+    // Outer sphere: normal glass (n = 1.5)
+    let glass_outer = Dielectric::new(1.5);
     world.add(Box::new(Sphere::new(
         Point3::new(-1.0, 0.0, -1.0),
         0.5,
-        left_material,
+        glass_outer,
+    )));
+
+    // Inner sphere: air bubble (n = 1.0/1.5 ≈ 0.67)
+    // creates the hollow effect by making the inside of the sphere act like air
+    let air_bubble = Dielectric::new(1.0 / 1.5);
+    world.add(Box::new(Sphere::new(
+        Point3::new(-1.0, 0.0, -1.0),
+        0.4,
+        air_bubble,
     )));
 
     // Right sphere - brushed metal (high fuzz)

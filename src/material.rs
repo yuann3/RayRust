@@ -26,6 +26,11 @@ pub struct Metal {
     fuzz: f64,
 }
 
+fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+    let r0 = ((1.0 - ref_idx) / (1.0 + ref_idx)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
+}
+
 impl Metal {
     pub fn new(albedo: Color, fuzz: f64) -> Arc<Self> {
         Arc::new(Self {
@@ -37,6 +42,8 @@ impl Metal {
 
 impl Material for Dielectric {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Color, Ray)> {
+        let attenuation = Color::new(1.0, 1.0, 1.0);
+
         let refraction_ratio = if rec.front_face {
             1.0 / self.refraction_index
         } else {
@@ -44,10 +51,21 @@ impl Material for Dielectric {
         };
 
         let unit_direction = r_in.direction().unit_vector();
-        let refracted = unit_direction.refract(&rec.normal, refraction_ratio);
+        let cos_theta = (-unit_direction).dot(&rec.normal).min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-        let scattered = Ray::new(rec.p, refracted);
-        Some((Color::new(1.0, 1.0, 1.0), scattered))
+        let cannot_refract = refraction_ratio * sin_theta > 1.0;
+
+        let reflectance = schlick(cos_theta, refraction_ratio);
+
+        let direction = if cannot_refract || reflectance > crate::bababoi::random_double() {
+            unit_direction.reflect(&rec.normal)
+        } else {
+            unit_direction.refract(&rec.normal, refraction_ratio)
+        };
+
+        let scattered = Ray::new(rec.p, direction);
+        Some((attenuation, scattered))
     }
 }
 
