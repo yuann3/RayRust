@@ -1,7 +1,5 @@
 ![image](https://github.com/user-attachments/assets/67c509ac-c1f3-4d3b-9edc-e1b77f277197)
 
-# GPU-Accelerated Ray Tracer
-
 a ray tracer with both CPU and GPU acceleration capabilities implemented in rust, just a fun project, do it for learning purpose
 
 with
@@ -14,7 +12,7 @@ with
 
 ## Prerequisites
 
-- just your shitty laptop, that have GPU with Vulkan, Metal, or DirectX 12 support (for GPU acceleration only)
+- just your shitty laptop, that have GPU with Vulkan, Metal, or DirectX 12 support (if you dont have then use your poor cpu)
 
 ## Building
 
