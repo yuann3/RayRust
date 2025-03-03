@@ -4,9 +4,49 @@ use raytracer::hittable_list::HittableList;
 use raytracer::material::{Dielectric, Lambertian, Metal};
 use raytracer::sphere::Sphere;
 use raytracer::vec3::{Color, Point3, Vec3};
+use std::env;
 use std::io;
 
 fn main() -> io::Result<()> {
+    // Parse command line arguments
+    let args: Vec<String> = env::args().collect();
+    let mut use_gpu = false;
+    let mut output_file = None;
+    
+    // Simple argument parsing
+    for arg in &args[1..] {
+        match arg.as_str() {
+            "--gpu" | "-g" => use_gpu = true,
+            "-o" | "--output" => {
+                // Next argument is the output file
+                let index = args.iter().position(|a| a == arg).unwrap();
+                if index + 1 < args.len() {
+                    output_file = Some(args[index + 1].clone());
+                }
+            }
+            _ => {
+                // Check if it's an output file after -o flag
+                if args.iter().position(|a| a == "-o" || a == "--output").unwrap_or(args.len()) 
+                   == args.iter().position(|a| a == arg).unwrap_or(args.len()) - 1 {
+                    continue;
+                }
+                
+                if arg.starts_with("-") {
+                    eprintln!("Unknown option: {}", arg);
+                    return Ok(());
+                }
+            }
+        }
+    }
+    
+    // Print rendering mode
+    if use_gpu {
+        eprintln!("Using GPU acceleration");
+    } else {
+        eprintln!("Using CPU rendering");
+    }
+    
+    // Create the world
     let mut world = HittableList::new();
 
     let ground_material = Lambertian::new(Color::new(0.5, 0.5, 0.5));
@@ -84,8 +124,13 @@ fn main() -> io::Result<()> {
     cam.vup = Vec3::new(0.0, 1.0, 0.0);
     cam.defocus_angle = 0.6;
     cam.focus_dist = 10.0;
+    cam.use_gpu = use_gpu;
 
-    cam.render(&world)?;
+    // Render the scene
+    match output_file {
+        Some(filename) => cam.render_to_file(&world, &filename)?,
+        None => cam.render(&world)?,
+    }
 
     Ok(())
 }
